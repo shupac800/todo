@@ -35,10 +35,9 @@ router.route("/api")
     });
   })
   .post((req, res) => {
-    console.log("attempting POST to firebase");
-    // create a new record and get the key
+    // create a new empty record and get its key
     const key = firebase.database().ref().child("todos").push().key;
-    console.log("new key:",key);
+    // update new record with k:v pairs in req.body
     firebase.database().ref().child("todos").child(key).update(req.body, (err) => {
       if (!err) {
         let returnObj = req.body;
@@ -49,15 +48,6 @@ router.route("/api")
         res.json({"message" : "error: " + err});
       }
     });
-
-    //res.json({"path" : fug.name()});
-      // .then((x) => {
-      //   console.log(x.name());
-      //   res.json({"message" : "write OK!"});
-      //         //    "data" : x.name()});
-      // }, (err) => {
-      //   res.json({"message" : "error: " + err});
-      // });
   })
   .put((req, res) => {
     let thisRecord = ref.child("todos").child(req.query.key);
@@ -74,5 +64,6 @@ router.route("/api")
 
 app.use('/', router);
 
-app.listen(8080);
-console.log("Listening on port 8080");
+const port = 3000;
+app.listen(port);
+console.log("Listening on port",port);
