@@ -35,13 +35,29 @@ router.route("/api")
     });
   })
   .post((req, res) => {
-    ref.child("todos").push(req.body)
-      .then(() => {
-        res.json({"message" : "write OK!",
-                  "data" : req.body});
-      }, (err) => {
+    console.log("attempting POST to firebase");
+    // create a new record and get the key
+    const key = firebase.database().ref().child("todos").push().key;
+    console.log("new key:",key);
+    firebase.database().ref().child("todos").child(key).update(req.body, (err) => {
+      if (!err) {
+        let returnObj = req.body;
+        returnObj.key = key;
+        res.json({"message" : "post OK!",
+                  "data" : returnObj});
+      } else {
         res.json({"message" : "error: " + err});
-      });
+      }
+    });
+
+    //res.json({"path" : fug.name()});
+      // .then((x) => {
+      //   console.log(x.name());
+      //   res.json({"message" : "write OK!"});
+      //         //    "data" : x.name()});
+      // }, (err) => {
+      //   res.json({"message" : "error: " + err});
+      // });
   })
   .put((req, res) => {
     let thisRecord = ref.child("todos").child(req.query.key);

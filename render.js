@@ -1,105 +1,91 @@
 "use strict";
 
-console.log("running");
-
-// var ProperListRender = React.createClass(
-//   { displayName: "ProperListRender",
-//     render: function() {
-//       return (
-//         React.createElement("ul", null,
-//           this.props.list.map(function(listValue){
-//             return React.createElement("li", null, listValue);
-//           })
-//         )
-//       )
-//     }
-//   }
-// );
-
-// var ProperListRender = React.createClass({
-//   render: function() {
-//     return (React.createElement('div',null,'Wazzup'));
-//   }
-// });
-
-// ReactDOM.render(
-//   React.createElement(ProperListRender, {list: [1,2,3,4,5]}),
-//                       document.getElementById('content')
-// );
-
-// define a component
-var Comment = React.createClass({
+const ToDo = React.createClass({
+  getInitialState: function() {
+    return {value: this.props.isDone};
+  },
   render: function() {
     return (
-      <div className="comment">
-        <h2 className="commentAuthor">
-          {this.props.author}
-        </h2>
-        {this.props.children}
-      </div>
+      <label className="todo">
+        <input type="checkbox" defaultChecked={this.state.value} onClick={this.handleClick}/>
+        {this.props.text}
+        <br/>
+      </label>
     );
+  },
+  handleClick: function(event) {
+    // toggle checkbox
+    this.state.value = !this.state.value;
+    console.log(this.state.value);
   }
 });
 
-var CommentList = React.createClass({
-  render: function() {
-    return  (
-      <div className="commentList">
-        <Comment author="Pete Hunt">This is one comment</Comment>
-        <Comment author="Jordan Walke">This is another comment</Comment>
-      </div>
-    );
-  }
-});
-
-var ToDo = React.createClass({
-  render: function() {
-    return (
-      <div className="todo">
-        <h2 className="todoText">
-          {this.props.text}
-        </h2>
-        {this.props.children}
-      </div>
-    );
-  }
-});
-
-var foo = function() {
-  return (<ToDo text = "have a wank">false</ToDo>);
-};
-
-var bar = function(arr) {
-  let list = [];
-  let baz = ["abc", "def", "ghi"];
-  for (let i = 0; i < baz.length; i++) {
-    list.push(<ToDo key={i} text={baz[i]}>false</ToDo>);
-  }
+const generateDisplayList = function(arr) {
+  // Object.keys(data).forEach((key) => {
+  //   list.push(<ToDo key={key} text={data[key].text} isDone={data[key].isDone}></ToDo>);
+  // });
+  console.log("generating list from:",arr);
+  let list = arr.map(function(o) {
+    return <ToDo key={o.id} text={o.data.text} isDone={o.data.isDone}></ToDo>
+  });
   return list;
 }
 
-var ToDoList = React.createClass({
+const ToDoList = React.createClass({
+  getInitialState: function() {
+    return {list: []}
+  },
+  loadToDoListFromServer: function() {
+    $.get("http://localhost:8080/api")
+      .done((res) => {
+        let foo = [];
+        console.log("res.data",res.data);
+        Object.keys(res.data).forEach((key) => {
+          console.log("x");
+          foo.push({id: key, data: res.data[key]})
+        });
+        if (foo.length > 0) this.setState({list: foo});
+      }.bind(this))
+      .fail((err) => {
+        console.log("AJAX error")
+      }.bind(this));
+  },
+  componentDidMount: function()  {
+    $("#addTask").on("click", this.addTask);
+    this.loadToDoListFromServer();
+  },
   render: function() {
-    return (
-      <div className="todoList">
-        <ToDo text="call your mother">true</ToDo>
-        <ToDo text="feed the iguana">false</ToDo>
-        <ToDo text={this.props.x}>true</ToDo>
-        {foo()}
-        {bar()}
-      </div>
-    );
+    // conditional render:
+    // don't want to return HTML before AJAX is finished
+    if (this.state.list.length > 0) {
+      return (
+        <div className="todoList">
+          {generateDisplayList(this.state.list)}
+        </div>
+      );
+    } else { return null }
+  },
+  addTask: function(e) {
+    console.log("click!");
+    $.post("http://localhost:8080/api", {text: $("#newTaskName").val(), isDone: false})
+      .done((res) => {
+        console.log("posted", res);
+      })
+      // .fail((err) => {
+      //   console.log("AJAX error");
+      // });
   }
 })
 
-ReactDOM.render(React.createElement(CommentList),document.getElementById('content'));
-ReactDOM.render(React.createElement(ToDoList,{x: "walk the kangaroo"}),document.getElementById('content'));
+// $.get("http://localhost:8080/api")
+//   .done((res) => {
+//     ReactDOM.render(React.createElement(ToDoList,{list: res.data}),document.getElementById("content"));
+//   })
+//   .fail((err) => {
+//     console.log("AJAX error");
+//   });
 
-$.get("http://localhost:8080/api")
-  .done((res) => {
-    console.log(res);
-
-  })
-  .fail((err) => {
-    console.log("AJAX error");
-  });
+ReactDOM.render(
+  React.createElement(ToDoList,null),
+                      document.getElementById("content")
+);
