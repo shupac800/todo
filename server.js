@@ -38,7 +38,7 @@ router.route("/api")
     // create a new empty record and get its key
     const key = firebase.database().ref().child("todos").push().key;
     // update new record with k:v pairs in req.body
-    firebase.database().ref().child("todos").child(key).update(req.body, (err) => {
+    ref.child("todos").child(key).update(req.body, (err) => {
       if (!err) {
         let returnObj = req.body;
         returnObj.key = key;
